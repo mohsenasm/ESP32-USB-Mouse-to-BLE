@@ -37,7 +37,9 @@
 #include "esp_hidd.h"
 #include "esp_hid_gap.h"
 
-static const char *TAG = "HID_DEV_DEMO";
+#include "hid_host_example.c"
+
+static const char *TAG = "ble-handler";
 
 typedef struct
 {
@@ -83,7 +85,7 @@ const unsigned char mouseReportMap[] = {
     0xc0                           // END_COLLECTION
 };
 // send the buttons, change in x, and change in y
-void send_mouse(uint8_t buttons, char dx, char dy, char wheel)
+void send_mouse(uint8_t buttons, int8_t dx, int8_t dy, int8_t wheel)
 {
     static uint8_t buffer[4] = {0};
     buffer[0] = buttons;
@@ -93,6 +95,7 @@ void send_mouse(uint8_t buttons, char dx, char dy, char wheel)
     esp_hidd_dev_input_set(s_ble_hid_param.hid_dev, 0, 0, buffer, 4);
 }
 
+/*
 void ble_hid_demo_task_mouse(void *pvParameters)
 {
     static const char* help_string = "########################################################################\n"\
@@ -138,6 +141,7 @@ void ble_hid_demo_task_mouse(void *pvParameters)
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
+*/
 
 static esp_hid_raw_report_map_t ble_report_maps[] = {
     {
@@ -239,8 +243,8 @@ void ble_hid_task_start_up(void)
         return;
     }
     
-    xTaskCreate(ble_hid_demo_task_mouse, "ble_hid_demo_task_mouse", 3 * 1024, NULL, configMAX_PRIORITIES - 3,
-                &s_ble_hid_param.task_hdl);
+    // xTaskCreate(ble_hid_demo_task_mouse, "ble_hid_demo_task_mouse", 3 * 1024, NULL, configMAX_PRIORITIES - 3,
+    //             &s_ble_hid_param.task_hdl);
 }
 
 void ble_hid_task_shut_down(void)
@@ -334,27 +338,5 @@ void app_main(void)
     ESP_ERROR_CHECK(
         esp_hidd_dev_init(&ble_hid_config, ESP_HID_TRANSPORT_BLE, ble_hidd_event_callback, &s_ble_hid_param.hid_dev));
 
-// #if CONFIG_BT_HID_DEVICE_ENABLED
-//     ESP_LOGI(TAG, "setting device name");
-//     esp_bt_gap_set_device_name(bt_hid_config.device_name);
-//     ESP_LOGI(TAG, "setting cod major, peripheral");
-//     esp_bt_cod_t cod;
-//     cod.major = ESP_BT_COD_MAJOR_DEV_PERIPHERAL;
-//     esp_bt_gap_set_cod(cod, ESP_BT_SET_COD_MAJOR_MINOR);
-//     vTaskDelay(1000 / portTICK_PERIOD_MS);
-//     ESP_LOGI(TAG, "setting bt device");
-//     ESP_ERROR_CHECK(
-//         esp_hidd_dev_init(&bt_hid_config, ESP_HID_TRANSPORT_BT, bt_hidd_event_callback, &s_bt_hid_param.hid_dev));
-// #endif
-// #if CONFIG_BT_NIMBLE_ENABLED
-//     /* XXX Need to have template for store */
-//     ble_store_config_init();
-
-//     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
-// 	/* Starting nimble task after gatts is initialized*/
-//     ret = esp_nimble_enable(ble_hid_device_host_task);
-//     if (ret) {
-//         ESP_LOGE(TAG, "esp_nimble_enable failed: %d", ret);
-//     }
-// #endif
+    init_usb(send_mouse);
 }
